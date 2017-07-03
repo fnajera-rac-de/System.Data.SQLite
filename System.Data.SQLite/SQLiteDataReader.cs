@@ -127,13 +127,6 @@ namespace System.Data.SQLite
 
     #region IDisposable "Pattern" Members
     private bool disposed;
-    private void CheckDisposed() /* throw */
-    {
-#if THROW_ON_DISPOSED
-        if (disposed && _throwOnDisposed)
-            throw new ObjectDisposedException(typeof(SQLiteDataReader).Name);
-#endif
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -195,8 +188,6 @@ namespace System.Data.SQLite
     /// </summary>
     public override void Close()
     {
-      CheckDisposed();
-
       SQLiteConnection.OnChanged(GetConnection(this),
           new ConnectionEventArgs(SQLiteConnectionEventType.ClosingDataReader,
           null, null, _command, this, null, null, new object[] { _commandBehavior,
@@ -256,41 +247,11 @@ namespace System.Data.SQLite
     }
 
     /// <summary>
-    /// Throw an error if the datareader is closed
-    /// </summary>
-    private void CheckClosed()
-    {
-      if (!_throwOnDisposed)
-        return;
-
-      if (_command == null)
-        throw new InvalidOperationException("DataReader has been closed");
-
-      if (_version == 0)
-        throw new SQLiteException("Execution was aborted by the user");
-
-      SQLiteConnection connection = _command.Connection;
-
-      if (connection._version != _version || connection.State != ConnectionState.Open)
-        throw new InvalidOperationException("Connection was closed, statement was terminated");
-    }
-
-    /// <summary>
-    /// Throw an error if a row is not loaded
-    /// </summary>
-    private void CheckValidRow()
-    {
-      if (_readingState != 0)
-        throw new InvalidOperationException("No current row");
-    }
-
-    /// <summary>
     /// Enumerator support
     /// </summary>
     /// <returns>Returns a DbEnumerator object.</returns>
     public override Collections.IEnumerator GetEnumerator()
     {
-      CheckDisposed();
       return new DbEnumerator(this, ((_commandBehavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection));
     }
 
@@ -301,8 +262,6 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
-        CheckClosed();
         return 0;
       }
     }
@@ -314,9 +273,6 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
-        CheckClosed();
-
         if (_keyInfo == null)
           return _fieldCount;
 
@@ -330,8 +286,6 @@ namespace System.Data.SQLite
     /// </summary>
     public void RefreshFlags()
     {
-        CheckDisposed();
-
         _flags = SQLiteCommand.GetFlags(_command);
     }
 
@@ -342,9 +296,6 @@ namespace System.Data.SQLite
     {
         get
         {
-            CheckDisposed();
-            CheckClosed();
-
             return _stepCount;
         }
     }
@@ -361,19 +312,8 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
-        CheckClosed();
         return PrivateVisibleFieldCount;
       }
-    }
-
-    /// <summary>
-    /// This method is used to make sure the result set is open and a row is currently available.
-    /// </summary>
-    private void VerifyForGet()
-    {
-        CheckClosed();
-        CheckValidRow();
     }
 
     /// <summary>
@@ -513,9 +453,6 @@ namespace System.Data.SQLite
         int i
         )
     {
-        // CheckDisposed();
-        VerifyForGet();
-
         if (_keyInfo == null)
             return null;
 
@@ -544,9 +481,6 @@ namespace System.Data.SQLite
     /// <returns>A new <see cref="SQLiteBlob" /> object.</returns>
     public SQLiteBlob GetBlob(int i, bool readOnly)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -573,9 +507,6 @@ namespace System.Data.SQLite
     /// <returns>bool</returns>
     public override bool GetBoolean(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -607,9 +538,6 @@ namespace System.Data.SQLite
     /// <returns>byte</returns>
     public override byte GetByte(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -648,9 +576,6 @@ namespace System.Data.SQLite
     /// </remarks>
     public override long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteReadArrayEventArgs eventArgs = new SQLiteReadArrayEventArgs(
@@ -701,9 +626,6 @@ namespace System.Data.SQLite
     /// <returns>char</returns>
     public override char GetChar(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -742,9 +664,6 @@ namespace System.Data.SQLite
     /// </remarks>
     public override long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteReadArrayEventArgs eventArgs = new SQLiteReadArrayEventArgs(
@@ -797,8 +716,6 @@ namespace System.Data.SQLite
     /// <returns>string</returns>
     public override string GetDataTypeName(int i)
     {
-        CheckDisposed();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetDataTypeName(i - PrivateVisibleFieldCount);
 
@@ -813,9 +730,6 @@ namespace System.Data.SQLite
     /// <returns>DateTime</returns>
     public override DateTime GetDateTime(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -847,9 +761,6 @@ namespace System.Data.SQLite
     /// <returns>decimal</returns>
     public override decimal GetDecimal(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -881,9 +792,6 @@ namespace System.Data.SQLite
     /// <returns>double</returns>
     public override double GetDouble(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -915,8 +823,6 @@ namespace System.Data.SQLite
     /// <returns>Type</returns>
     public override Type GetFieldType(int i)
     {
-        CheckDisposed();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetFieldType(i - PrivateVisibleFieldCount);
 
@@ -930,9 +836,6 @@ namespace System.Data.SQLite
     /// <returns>float</returns>
     public override float GetFloat(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -964,9 +867,6 @@ namespace System.Data.SQLite
     /// <returns>Guid</returns>
     public override Guid GetGuid(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -1005,9 +905,6 @@ namespace System.Data.SQLite
     /// <returns>Int16</returns>
     public override Int16 GetInt16(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -1039,9 +936,6 @@ namespace System.Data.SQLite
     /// <returns>Int32</returns>
     public override Int32 GetInt32(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -1073,9 +967,6 @@ namespace System.Data.SQLite
     /// <returns>Int64</returns>
     public override Int64 GetInt64(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -1107,8 +998,6 @@ namespace System.Data.SQLite
     /// <returns>string</returns>
     public override string GetName(int i)
     {
-        CheckDisposed();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetName(i - PrivateVisibleFieldCount);
 
@@ -1122,8 +1011,6 @@ namespace System.Data.SQLite
     /// <returns>string</returns>
     public string GetDatabaseName(int i)
     {
-        CheckDisposed();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetName(i - PrivateVisibleFieldCount);
 
@@ -1137,8 +1024,6 @@ namespace System.Data.SQLite
     /// <returns>string</returns>
     public string GetTableName(int i)
     {
-        CheckDisposed();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetName(i - PrivateVisibleFieldCount);
 
@@ -1152,8 +1037,6 @@ namespace System.Data.SQLite
     /// <returns>string</returns>
     public string GetOriginalName(int i)
     {
-        CheckDisposed();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetName(i - PrivateVisibleFieldCount);
 
@@ -1167,10 +1050,6 @@ namespace System.Data.SQLite
     /// <returns>The int i of the column</returns>
     public override int GetOrdinal(string name)
     {
-      CheckDisposed();
-
-      if (_throwOnDisposed) SQLiteCommand.Check(_command);
-
       //
       // NOTE: First, check if the column name cache has been initialized yet.
       //       If not, do it now.
@@ -1211,7 +1090,6 @@ namespace System.Data.SQLite
     /// <returns>Returns a DataTable containing the schema information for the active SELECT statement being processed.</returns>
     public override DataTable GetSchemaTable()
     {
-      CheckDisposed();
       return GetSchemaTable(true, false);
     }
 
@@ -1377,9 +1255,6 @@ namespace System.Data.SQLite
 
     internal DataTable GetSchemaTable(bool wantUniqueInfo, bool wantDefaultValue)
     {
-      CheckClosed();
-      if (_throwOnDisposed) SQLiteCommand.Check(_command);
-
       //
       // BUGFIX: We need to quickly scan all the fields in the current
       //         "result set" to see how many distinct tables are actually
@@ -1626,9 +1501,6 @@ namespace System.Data.SQLite
     /// <returns>string</returns>
     public override string GetString(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -1657,9 +1529,6 @@ namespace System.Data.SQLite
     /// <returns>object</returns>
     public override object GetValue(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if ((_flags & SQLiteConnectionFlags.UseConnectionReadValueCallbacks) == SQLiteConnectionFlags.UseConnectionReadValueCallbacks)
         {
             SQLiteDataReaderValue value = new SQLiteDataReaderValue();
@@ -1700,8 +1569,6 @@ namespace System.Data.SQLite
     /// <returns>The number of columns retrieved</returns>
     public override int GetValues(object[] values)
     {
-      CheckDisposed();
-
       int nMax = FieldCount;
       if (values.Length < nMax) nMax = values.Length;
 
@@ -1725,8 +1592,6 @@ namespace System.Data.SQLite
     /// </returns>
     public NameValueCollection GetValues()
     {
-        CheckDisposed();
-
         if ((_activeStatement == null) || (_activeStatement._sql == null))
             throw new InvalidOperationException();
 
@@ -1751,9 +1616,6 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
-        CheckClosed();
-
         //
         // NOTE: If the "sticky" flag has been set, use the new behavior,
         //       which returns non-zero if there were ever any rows in
@@ -1780,7 +1642,7 @@ namespace System.Data.SQLite
     /// </summary>
     public override bool IsClosed
     {
-      get { CheckDisposed(); return (_command == null); }
+      get { return (_command == null); }
     }
 
     /// <summary>
@@ -1790,9 +1652,6 @@ namespace System.Data.SQLite
     /// <returns>True or False</returns>
     public override bool IsDBNull(int i)
     {
-        CheckDisposed();
-        VerifyForGet();
-
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.IsDBNull(i - PrivateVisibleFieldCount);
 
@@ -1805,10 +1664,6 @@ namespace System.Data.SQLite
     /// <returns>True if the command was successful and a new resultset is available, False otherwise.</returns>
     public override bool NextResult()
     {
-      CheckDisposed();
-      CheckClosed();
-      if (_throwOnDisposed) SQLiteCommand.Check(_command);
-
       SQLiteStatement stmt = null;
       int fieldCount;
       bool schemaOnly = ((_commandBehavior & CommandBehavior.SchemaOnly) != 0);
@@ -2024,10 +1879,6 @@ namespace System.Data.SQLite
     /// <returns>True if a new row was successfully loaded and is ready for processing</returns>
     public override bool Read()
     {
-      CheckDisposed();
-      CheckClosed();
-      if (_throwOnDisposed) SQLiteCommand.Check(_command);
-
       if ((_commandBehavior & CommandBehavior.SchemaOnly) != 0)
         return false;
 
@@ -2068,7 +1919,7 @@ namespace System.Data.SQLite
     /// </summary>
     public override int RecordsAffected
     {
-      get { CheckDisposed(); return _rowsAffected; }
+      get { return _rowsAffected; }
     }
 
     /// <summary>
@@ -2078,7 +1929,7 @@ namespace System.Data.SQLite
     /// <returns>The value contained in the column</returns>
     public override object this[string name]
     {
-      get { CheckDisposed(); return GetValue(GetOrdinal(name)); }
+      get { return GetValue(GetOrdinal(name)); }
     }
 
     /// <summary>
@@ -2088,7 +1939,7 @@ namespace System.Data.SQLite
     /// <returns>The value contained in the column</returns>
     public override object this[int i]
     {
-      get { CheckDisposed(); return GetValue(i); }
+      get { return GetValue(i); }
     }
 
     private void LoadKeyInfo()
