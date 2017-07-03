@@ -165,7 +165,6 @@ namespace System.Data.SQLite
         if (command == null)
             throw new ArgumentNullException("command");
 
-        command.CheckDisposed();
         SQLiteConnection.Check(command._cnn);
     }
 
@@ -173,13 +172,6 @@ namespace System.Data.SQLite
 
     #region IDisposable "Pattern" Members
     private bool disposed;
-    private void CheckDisposed() /* throw */
-    {
-#if THROW_ON_DISPOSED
-        if (disposed)
-            throw new ObjectDisposedException(typeof(SQLiteCommand).Name);
-#endif
-    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -412,8 +404,6 @@ namespace System.Data.SQLite
     /// </summary>
     public override void Cancel()
     {
-      CheckDisposed();
-
       if (_activeReader != null)
       {
         SQLiteDataReader reader = _activeReader.Target as SQLiteDataReader;
@@ -432,14 +422,10 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
-
         return _commandText;
       }
       set
       {
-        CheckDisposed();
-
         if (_commandText == value) return;
 
         if (_activeReader != null && _activeReader.IsAlive)
@@ -464,12 +450,10 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
         return _commandTimeout;
       }
       set
       {
-        CheckDisposed();
         _commandTimeout = value;
       }
     }
@@ -484,13 +468,10 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
         return CommandType.Text;
       }
       set
       {
-        CheckDisposed();
-
         if (value != CommandType.Text)
         {
           throw new NotSupportedException();
@@ -513,7 +494,6 @@ namespace System.Data.SQLite
     /// <returns></returns>
     public new SQLiteParameter CreateParameter()
     {
-      CheckDisposed();
       return new SQLiteParameter(this);
     }
 
@@ -525,11 +505,9 @@ namespace System.Data.SQLite
 #endif
     public new SQLiteConnection Connection
     {
-      get { CheckDisposed(); return _cnn; }
+      get { return _cnn; }
       set
       {
-        CheckDisposed();
-
         if (_activeReader != null && _activeReader.IsAlive)
           throw new InvalidOperationException("Cannot set Connection while a DataReader is active");
 
@@ -571,7 +549,7 @@ namespace System.Data.SQLite
 #endif
     public new SQLiteParameterCollection Parameters
     {
-      get { CheckDisposed(); return _parameterCollection; }
+      get { return _parameterCollection; }
     }
 
     /// <summary>
@@ -594,11 +572,9 @@ namespace System.Data.SQLite
 #endif
     public new SQLiteTransaction Transaction
     {
-      get { CheckDisposed(); return _transaction; }
+      get { return _transaction; }
       set
       {
-        CheckDisposed();
-
         if (_cnn != null)
         {
           if (_activeReader != null && _activeReader.IsAlive)
@@ -641,8 +617,6 @@ namespace System.Data.SQLite
     /// </summary>
     public void VerifyOnly()
     {
-        CheckDisposed();
-
         SQLiteConnection connection = _cnn;
         SQLiteConnection.Check(connection); /* throw */
         SQLiteBase sqlBase = connection._sql;
@@ -935,7 +909,6 @@ namespace System.Data.SQLite
     /// <returns>A SQLiteDataReader</returns>
     public new SQLiteDataReader ExecuteReader(CommandBehavior behavior)
     {
-      CheckDisposed();
       SQLiteConnection.Check(_cnn);
       InitializeForReader();
 
@@ -951,7 +924,6 @@ namespace System.Data.SQLite
     /// <returns>A SQLiteDataReader</returns>
     public new SQLiteDataReader ExecuteReader()
     {
-      CheckDisposed();
       SQLiteConnection.Check(_cnn);
       return ExecuteReader(CommandBehavior.Default);
     }
@@ -970,7 +942,6 @@ namespace System.Data.SQLite
     /// <returns>The number of rows inserted/updated affected by it.</returns>
     public override int ExecuteNonQuery()
     {
-        CheckDisposed();
         SQLiteConnection.Check(_cnn);
         return ExecuteNonQuery(CommandBehavior.Default);
     }
@@ -984,7 +955,6 @@ namespace System.Data.SQLite
         CommandBehavior behavior
         )
     {
-      CheckDisposed();
       SQLiteConnection.Check(_cnn);
 
       using (SQLiteDataReader reader = ExecuteReader(behavior |
@@ -1002,7 +972,6 @@ namespace System.Data.SQLite
     /// <returns>The first column of the first row of the first resultset from the query.</returns>
     public override object ExecuteScalar()
     {
-      CheckDisposed();
       SQLiteConnection.Check(_cnn);
       return ExecuteScalar(CommandBehavior.Default);
     }
@@ -1017,7 +986,6 @@ namespace System.Data.SQLite
         CommandBehavior behavior
         )
     {
-      CheckDisposed();
       SQLiteConnection.Check(_cnn);
 
       using (SQLiteDataReader reader = ExecuteReader(behavior |
@@ -1035,7 +1003,6 @@ namespace System.Data.SQLite
     /// </summary>
     public void Reset()
     {
-        CheckDisposed();
         SQLiteConnection.Check(_cnn);
 
         Reset(true, false);
@@ -1059,7 +1026,6 @@ namespace System.Data.SQLite
         bool ignoreErrors
         )
     {
-        CheckDisposed();
         SQLiteConnection.Check(_cnn);
 
         if (clearBindings && (_parameterCollection != null))
@@ -1101,7 +1067,6 @@ namespace System.Data.SQLite
     /// </summary>
     public override void Prepare()
     {
-      CheckDisposed();
       SQLiteConnection.Check(_cnn);
     }
 
@@ -1113,12 +1078,10 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
         return _updateRowSource;
       }
       set
       {
-        CheckDisposed();
         _updateRowSource = value;
       }
     }
@@ -1133,13 +1096,10 @@ namespace System.Data.SQLite
     {
       get
       {
-        CheckDisposed();
         return _designTimeVisible;
       }
       set
       {
-        CheckDisposed();
-
         _designTimeVisible = value;
 #if !PLATFORM_COMPACTFRAMEWORK
         TypeDescriptor.Refresh(this);
@@ -1153,7 +1113,6 @@ namespace System.Data.SQLite
     /// <returns>A new SQLiteCommand with the same commandtext, connection and parameters</returns>
     public object Clone()
     {
-      CheckDisposed();
       return new SQLiteCommand(this);
     }
   }

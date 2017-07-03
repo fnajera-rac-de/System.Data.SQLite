@@ -329,11 +329,8 @@ namespace System.Data.SQLite
     /// </returns>
     /// <param name="i">The index of the column to type-check</param>
     /// <param name="typ">The type we want to get out of the column</param>
-    private TypeAffinity VerifyType(int i, DbType typ)
+    private TypeAffinity VerifyType1(int i, DbType typ)
     {
-        if ((_flags & SQLiteConnectionFlags.NoVerifyTypeAffinity) == SQLiteConnectionFlags.NoVerifyTypeAffinity)
-            return TypeAffinity.None;
-
         TypeAffinity affinity = GetSQLiteType(_flags, i).Affinity;
 
         switch (affinity)
@@ -527,7 +524,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetBoolean(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Boolean);
         return Convert.ToBoolean(GetValue(i), CultureInfo.CurrentCulture);
     }
 
@@ -558,7 +554,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetByte(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Byte);
         return _activeStatement._sql.GetByte(_activeStatement, i);
     }
 
@@ -615,7 +610,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetBytes(i - PrivateVisibleFieldCount, fieldOffset, buffer, bufferoffset, length);
 
-        VerifyType(i, DbType.Binary);
         return _activeStatement._sql.GetBytes(_activeStatement, i, (int)fieldOffset, buffer, bufferoffset, length);
     }
 
@@ -646,7 +640,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetChar(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.SByte);
         return _activeStatement._sql.GetChar(_activeStatement, i);
     }
 
@@ -703,9 +696,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetChars(i - PrivateVisibleFieldCount, fieldoffset, buffer, bufferoffset, length);
 
-        if ((_flags & SQLiteConnectionFlags.NoVerifyTextAffinity) != SQLiteConnectionFlags.NoVerifyTextAffinity)
-            VerifyType(i, DbType.String);
-
         return _activeStatement._sql.GetChars(_activeStatement, i, (int)fieldoffset, buffer, bufferoffset, length);
     }
 
@@ -750,7 +740,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetDateTime(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.DateTime);
         return _activeStatement._sql.GetDateTime(_activeStatement, i);
     }
 
@@ -781,7 +770,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetDecimal(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Decimal);
         return Decimal.Parse(_activeStatement._sql.GetText(_activeStatement, i), NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
     }
 
@@ -812,7 +800,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetDouble(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Double);
         return _activeStatement._sql.GetDouble(_activeStatement, i);
     }
 
@@ -856,7 +843,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetFloat(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Single);
         return Convert.ToSingle(_activeStatement._sql.GetDouble(_activeStatement, i));
     }
 
@@ -887,7 +873,7 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetGuid(i - PrivateVisibleFieldCount);
 
-        TypeAffinity affinity = VerifyType(i, DbType.Guid);
+        TypeAffinity affinity = VerifyType1(i, DbType.Guid);
         if (affinity == TypeAffinity.Blob)
         {
             byte[] buffer = new byte[16];
@@ -925,7 +911,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetInt16(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Int16);
         return _activeStatement._sql.GetInt16(_activeStatement, i);
     }
 
@@ -956,7 +941,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetInt32(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Int32);
         return _activeStatement._sql.GetInt32(_activeStatement, i);
     }
 
@@ -987,7 +971,6 @@ namespace System.Data.SQLite
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetInt64(i - PrivateVisibleFieldCount);
 
-        VerifyType(i, DbType.Int64);
         return _activeStatement._sql.GetInt64(_activeStatement, i);
     }
 
@@ -1515,9 +1498,6 @@ namespace System.Data.SQLite
 
         if (i >= PrivateVisibleFieldCount && _keyInfo != null)
             return _keyInfo.GetString(i - PrivateVisibleFieldCount);
-
-        if ((_flags & SQLiteConnectionFlags.NoVerifyTextAffinity) != SQLiteConnectionFlags.NoVerifyTextAffinity)
-            VerifyType(i, DbType.String);
 
         return _activeStatement._sql.GetText(_activeStatement, i);
     }
