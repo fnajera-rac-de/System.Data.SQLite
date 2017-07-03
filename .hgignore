@@ -1,0 +1,7 @@
+syntax: glob
+.vs
+_ReSharper.Caches
+bin
+obj
+**.user
+**.csproj~
